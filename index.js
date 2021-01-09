@@ -7,10 +7,11 @@ const ethUsdtPairAddress = "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852"; //token
 let ethUsdtInstance = new web3.eth.Contract(pairAbi.abi, ethUsdtPairAddress)
 const converters = require("./converters")
 
-let trades = {}
+let swaps = {
+    "ETHUSDT": []
+}
 
-
-const invokeListener = async function() {
+const invokeSwapListener = async function() {
     let latestBlockNumber = 11620993;
     ethUsdtInstance.events.Swap(
         {
@@ -22,32 +23,37 @@ const invokeListener = async function() {
                 throw error;
             }
             const caughtEvent = event.event;
-            addTrade(event)
+            addSwap(event, "ETHUSDT")
             latestBlockNumber = event.blockNumber;
         }
     )
 }
 
-const addTrade = function(event){
+const addSwap = function(event, pair){
+    console.log(event)
     if(event.returnValues.amount0In === '0'){ //buying eth
-        let selling = Number(converters.szaboToEth(event.returnValues.amount1In))
-        let buying = Number(converters.weiToEth(event.returnValues.amount0Out))
+        const selling = Number(converters.szaboToEth(event.returnValues.amount1In))
+        const buying = Number(converters.weiToEth(event.returnValues.amount0Out))
+        const derivedPrice = selling / buying;
         console.log("Selling " + selling + " USDT")
         console.log("For " + buying + " Eth")
-        console.log("Price: " + (selling / buying) + " USDT")
+        console.log("Price: " + derivedPrice + " USDT")
         console.log("________________________________")
         console.log()
+        swaps[pair].push({amountEth: buying, amountUSDT: selling, block: event.blockNumber, derivedPrice})
     } else { //selling eth
-        let selling = Number(converters.weiToEth(event.returnValues.amount0In))
-        let buying = Number(converters.szaboToEth(event.returnValues.amount1Out))
+        const selling = Number(converters.weiToEth(event.returnValues.amount0In))
+        const buying = Number(converters.szaboToEth(event.returnValues.amount1Out))
+        const derivedPrice = buying / selling;
         console.log("Selling " + selling + " Eth")
         console.log("For " + buying + " USDT")
-        console.log("Price: " + (buying / selling) + " USDT")
+        console.log("Price: " + derivedPrice + " USDT")
         console.log("________________________________")
         console.log()
+        swaps[pair].push({amountEth: selling, amountUSDT: buying, block: event.blockNumber, derivedPrice})
     }
-
+    console.log(swaps)
 }
 
-invokeListener()
+invokeSwapListener()
 
