@@ -8,7 +8,7 @@ const gweiToEth = (num) => {
     return Web3Utils.fromWei(Web3Utils.toWei(num.toString(), "gwei"), "ether")
 }
 
-const mweiToEth = (num) => {
+const mweiToEth = (num) => {x
     if(num instanceof String){
         return Web3Utils.fromWei(Web3Utils.toWei(num, "mwei"), "ether")
     }
